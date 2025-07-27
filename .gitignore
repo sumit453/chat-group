@@ -1,0 +1,209 @@
+node_modules
+### General ###
+.DS_Store
+*.log
+*.tmp
+*.swp
+*~
+~$*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+### OS ###
+# Windows
+[Tt]humbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# macOS
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+### IDEs ###
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains (IntelliJ, WebStorm, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+*.bak
+
+# Vim
+*.un~
+.session
+*.tags
+
+### Languages ###
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+env/
+.venv/
+env.bak/
+venv.bak/
+pip-selfcheck.json
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+.gradle/
+build/
+out/
+bin/
+.apt_generated/
+
+# C/C++
+*.o
+*.a
+*.so
+*.out
+*.exe
+.dep/
+*.d
+*.obj
+*.lib
+
+# Go
+/bin/
+/pkg/
+
+# Rust
+/target/
+**/*.rs.bk
+
+# Ruby
+/.bundle
+/vendor/bundle
+*.gem
+.bundle
+.ruby-version
+
+### Frameworks ###
+# Android
+.idea/
+.gradle/
+local.properties
+*.apk
+*.ap_
+*.dex
+*.class
+gen/
+build/
+
+# iOS
+**/build/
+**/DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+
+### Web ###
+# General
+dist/
+build/
+public/build/
+public/static/
+public/dist/
+assets/css/*.map
+assets/js/*.map
+
+# Sass
+.sass-cache/
+
+### Databases ###
+*.sqlite3
+*.db
+*.dump
+*.sublime-workspace
+
+### Environment ###
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.credentials
+secrets.ini
+appsettings.local.json
+
+### Packages ###
+# Ignore lock files (uncomment if needed)
+# package-lock.json
+# yarn.lock
+# Gemfile.lock
+# Pipfile.lock
+
+### Testing/CI ###
+coverage/
+.nyc_output/
+*.lcov
+junit.xml
+test-results.xml
+.coveralls.yml
+
+### Build Systems ###
+*.egg-info/
+*.egg
+MANIFEST
+dist/
+build/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+parts/
+var/
+sdist/
+wheels/
+share/python-wheels/
+*.manifest
+*.spec
+
+### Documentation ###
+site/
+_site/
+docs/_build/
+docs/api/
+mkdocs/docs.zip
