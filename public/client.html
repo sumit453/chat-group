@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Chat App</title>
+  </head>
+  <body>
+    <div id="online-user-container" style="display: none">
+      <div id="online-user-list"></div>
+    </div>
+    <!-- login container -->
+    <div id="login-container">
+      <form id="login-form">
+        <label for="name">Name: </label>
+        <input
+          type="text"
+          id="user-name"
+          placeholder="Enter user name"
+          required
+        />
+        <label for="number">Room Number: </label>
+        <input
+          type="text"
+          id="room-number"
+          placeholder="Enter the room number"
+          required
+        />
+        <label for="email">Email: </label>
+        <input
+          type="text"
+          id="email"
+          placeholder="example@email.com"
+          required
+        />
+        <button id="login-submit">Submit</button>
+      </form>
+    </div>
+
+    <!-- profile pic form and container -->
+    <div id="profilepic-container" style="display: none">
+      <form id="profilepic-form">
+        <label for="profile-picture">Profile Picture: </label>
+        <input type="file" id="profile-pic" accept="image/*" />
+        <button id="profilepic-button">Submit</button>
+      </form>
+    </div>
+
+    <!-- message container -->
+    <div id="message-container" style="display: none">
+      <div id="text-display"></div>
+      <form id="message-form">
+        <input
+          type="text"
+          id="message"
+          placeholder="Enter your message"
+          required
+        />
+        <button id="send-message">Send</button>
+      </form>
+    </div>
+
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io.connect("http://localhost:3000");
+
+      const loginContainer = document.getElementById("login-container");
+      const loginForm = document.getElementById("login-form");
+      const usererName = document.getElementById("user-name");
+      const roomNumber = document.getElementById("room-number");
+      const emailId = document.getElementById("email");
+      const messageContainer = document.getElementById("message-container");
+      const messageForm = document.getElementById("message-form");
+      const messageDisplay = document.getElementById("text-display");
+      const userMessage = document.getElementById("message");
+      const onlineUserList = document.getElementById("online-user-list");
+      const onlineUserContainer = document.getElementById(
+        "online-user-container"
+      );
+      const profilePicContainer = document.getElementById(
+        "profilepic-container"
+      );
+      const profilePicForm = document.getElementById("profilepic-form");
+      const profilePic = document.getElementById("profile-pic");
+
+      let room = "";
+      let user = "";
+      let email = "";
+
+      let typingTimeout;
+      const TYPING_TIMEOUT = 2000; // 2second delay after typing stops
+
+      loginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        room = roomNumber.value;
+        user = usererName.value;
+        email = emailId.value;
+
+        socket.emit("join", {
+          room: room,
+          user: user,
+          email: email,
+        });
+
+        socket.on("userUpdate", (data) => {
+          if (data.status == true) {
+            messageContainer.style.display = "block";
+            loginContainer.style.display = "none";
+            onlineUserContainer.style.display = "block";
+            profilePicContainer.style.display = "none";
+          } else {
+            messageContainer.style.display = "none";
+            loginContainer.style.display = "none";
+            onlineUserContainer.style.display = "none";
+            profilePicContainer.style.display = "block";
+          }
+        });
+      });
+
+      profilePicForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const file = profilePic.files[0];
+
+        if (!file) {
+          alert("Please select a profile picture.");
+          return;
+        }
+
+        const reader = new FileReader();
+
+        // This function runs AFTER the file is loaded
+        reader.onload = function () {
+          // 1. Get the base64 result
+          const profilePictureBase64 = reader.result;
+
+          // 2. Update UI
+          messageContainer.style.display = "block";
+          loginContainer.style.display = "none";
+          onlineUserContainer.style.display = "block";
+          profilePicContainer.style.display = "none";
+
+          // 3. Emit the join event with the profile picture
+          socket.emit("addPofilePic", {
+            room: room,
+            user: user,
+            email: email,
+            profilePhoto: profilePictureBase64, // Use the result here
+          });
+        };
+
+        // Start reading the file - this triggers the onload when done
+        reader.readAsDataURL(file);
+      });
+
+      socket.on("online_user", (data) => {
+        const onlineUser = document.createElement("div");
+        onlineUser.id = data._id;
+
+        // add green online indicator
+        const indicator = document.createElement("span");
+        indicator.className = "online-indicator";
+        onlineUser.appendChild(indicator);
+
+        //add profile picture
+        const profileP = document.createElement("span");
+        profileP.innerHTML = `<img src="${data.profilePhoto}" class= "profile-thumb"/>`;
+        profileP.className = "User-profilepic";
+        onlineUser.append(profileP);
+
+        //add user name
+        const userName = document.createElement("span");
+        userName.textContent = data.user;
+        userName.className = "user-name";
+        onlineUser.append(userName);
+
+        // only show logout button to current user
+        if (data.user === user) {
+          const logoutBtn = document.createElement("button");
+          const deleteAccountBtn = document.createElement("button");
+          deleteAccountBtn.textContent = "Delete Account";
+          logoutBtn.textContent = "Logout";
+          logoutBtn.style.margin = "10px";
+          deleteAccountBtn.style.margin = "10px";
+          logoutBtn.className = "logout-btn";
+          deleteAccountBtn.className = "logout-btn";
+          //adding event listener to logout button
+          logoutBtn.addEventListener("click", () => {
+            socket.emit("logout", {
+              id: data._id,
+              user: data.user,
+              room: data.room,
+            });
+            onlineUserList.removeChild(onlineUser);
+            // Update UI without reloading
+            location.reload();
+          });
+          //add event listener to delete account button
+          deleteAccountBtn.addEventListener("click", () => {
+            let userConfirmed = confirm(
+              "Are you sure to delete this account? it will delete all of your messages too"
+            );
+            if (userConfirmed) {
+              socket.emit("delete_account", {
+                id: data._id,
+                user: data.user,
+                room: data.room,
+              });
+              onlineUserList.removeChild(onlineUser);
+              location.reload();
+            }
+          });
+          onlineUser.appendChild(logoutBtn);
+          onlineUser.appendChild(deleteAccountBtn);
+        }
+
+        onlineUserList.appendChild(onlineUser);
+      });
+
+      // Add typing indicator element
+      const typingIndicator = document.createElement("div");
+      typingIndicator.id = "typing-indicator";
+      typingIndicator.style.display = "none";
+      typingIndicator.style.fontStyle = "italic";
+      typingIndicator.style.color = "#888";
+      typingIndicator.style.padding = "5px";
+      messageDisplay.appendChild(typingIndicator);
+
+      // Add typing event listeners
+      userMessage.addEventListener("input", () => {
+        clearTimeout(typingTimeout);
+
+        if (userMessage.value) {
+          socket.emit("typing", { room, user });
+        } else {
+          socket.emit("stop_typing", { room, user });
+        }
+
+        // Set timeout to stop typing indicator
+        typingTimeout = setTimeout(() => {
+          socket.emit("stop_typing", { room, user });
+        }, TYPING_TIMEOUT);
+      });
+
+      // Logout user listener
+      socket.on("logout_user", (data) => {
+        const userDiv = document.getElementById(data.id);
+        onlineUserList.removeChild(userDiv);
+      });
+
+      // delete and create message function
+      function connectionDataMessage(data) {
+        const textkDiv = document.createElement("div");
+
+        // add id to the taskDiv
+        if (data._id) {
+          textkDiv.id = data._id;
+        }
+
+        // create delete button for every text
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete message";
+        deleteBtn.style.margin = "10px";
+
+        // add time to the text
+        if (data.createAt) {
+          const time = new Date(data.createAt).toLocaleTimeString();
+          const date = new Date(data.createAt).toDateString();
+          textkDiv.innerHTML = `${time} - ${date} - <img src="${
+            data.profilePhoto
+          }" class= "profile-thumb"/> ${data.user ? data.user : ""} - <strong>${
+            data.message
+          }</strong>`;
+        } else {
+          textkDiv.innerHTML = `<img src="${
+            data.profilePhoto
+          }" class= "profile-thumb"/> ${data.user ? data.user : ""} - <strong>${
+            data.message
+          }</strong>`;
+        }
+
+        //add delete button into textdiv
+        if (data.user == user) {
+          textkDiv.append(deleteBtn);
+        }
+
+        //add textDiv into message display
+        messageDisplay.appendChild(textkDiv);
+
+        // add delete button function
+        deleteBtn.addEventListener("click", () => {
+          if (data._id) {
+            socket.emit("delete", { id: data._id });
+          }
+          messageDisplay.removeChild(textkDiv);
+        });
+      }
+
+      //send message
+      messageForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const message = userMessage.value;
+        if (message) {
+          socket.emit("user_message", {
+            message: message,
+            user: user,
+            room: room,
+          });
+          userMessage.value = "";
+        }
+        // Clear typing indicator
+        clearTimeout(typingTimeout);
+        socket.emit("stop_typing", { room, user });
+      });
+
+      // Add typing event hendler
+      socket.on("typing_update", (data) => {
+        // Skip our own typing indicator
+        if (data.user === user) {
+          return;
+        }
+
+        const indicator = document.getElementById("typing-indicator");
+
+        if (data.typing) {
+          indicator.textContent = `${data.user} is typing...`;
+          indicator.style.display = "block";
+        } else {
+          indicator.style.display = "none";
+        }
+
+        // Scroll to bottom to see typing indicator
+        messageDisplay.scrollTop = messageDisplay.scrollHeight;
+      });
+
+      //load all message listener
+      socket.on("load_message", (message) => {
+        message.forEach((element) => {
+          connectionDataMessage(element);
+        });
+      });
+
+      //recive brodcasted messege from the server
+      socket.on("broadcast_message", (data) => {
+        connectionDataMessage(data);
+      });
+
+      // delete message listener
+      socket.on("delete_message", (data) => {
+        const messageNeedToDelete = document.getElementById(data.id);
+        messageDisplay.removeChild(messageNeedToDelete);
+      });
+    </script>
+  </body>
+</html>
