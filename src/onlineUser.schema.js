@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { type } from "os";
 
 const onlineUserSchema = new mongoose.Schema({
   user: { type: String, require: [true, "User is required"] },
